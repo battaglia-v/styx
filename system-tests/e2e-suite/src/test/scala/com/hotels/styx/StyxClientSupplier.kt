@@ -17,17 +17,17 @@ package com.hotels.styx
 
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
-import com.hotels.styx.api._
+import com.hotels.styx.api.HttpRequest
 import com.hotels.styx.client.StyxHttpClient
-import org.scalatest.{BeforeAndAfterAll, Suite}
+import org.scalatest.BeforeAndAfterAll
+
 import org.slf4j.LoggerFactory
 
-import scala.compat.java8.FutureConverters.CompletionStageOps
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.seconds
 
-trait StyxClientSupplier extends BeforeAndAfterAll {
+interface StyxClientSupplier: BeforeAndAfterAll {
   this: Suite =>
 
   val TWO_SECONDS: Int = 2 * 1000
@@ -35,27 +35,29 @@ trait StyxClientSupplier extends BeforeAndAfterAll {
 
   private val LOGGER = LoggerFactory.getLogger(getClass)
 
-  val client: StyxHttpClient = new StyxHttpClient.Builder()
+  val client: StyxHttpClient = StyxHttpClient.Builder()
     .connectTimeout(1000, MILLISECONDS)
     .maxHeaderSize(2 * 8192)
     .build()
 
-  override protected def afterAll() = {
+  override fun afterAll(): Unit {
     super.afterAll()
   }
 
-  private def doRequest(request: HttpRequest, secure: Boolean = false): Future[HttpResponse] = if (secure)
+  private fun doRequest(
+    val request: HttpRequest, secure: Boolean = false): Future[HttpResponse] = if (secure)
     client.secure().send(request).toScala
   else
     client.send(request).toScala
 
-  def decodedRequest(request: HttpRequest,
+  @ExperimentalTime
+  fun decodedRequest(request: HttpRequest,
                      debug: Boolean = false,
                      maxSize: Int = 1024 * 1024, timeout: Duration = 45.seconds,
                      secure: Boolean = false
                     ): HttpResponse = {
     val future = doRequest(request, secure = secure)
-      .map(response => {
+      .map(response -> ()
         if (debug) {
           LOGGER.info("StyxClientSupplier: received response for: " + request.url().path())
         }
