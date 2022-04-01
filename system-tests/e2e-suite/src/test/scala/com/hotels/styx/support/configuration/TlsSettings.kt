@@ -17,7 +17,7 @@ package com.hotels.styx.support.configuration
 
 import com.hotels.styx.api.extension.service.Certificate
 
-data class Certificate(val alias: String, val certificatePath: String) {
+class Certificate(val alias: String, val certificatePath: String) {
   fun asJava(): Certificate = Certificate.certificate(alias, certificatePath)
 
   companion object {
@@ -26,7 +26,7 @@ data class Certificate(val alias: String, val certificatePath: String) {
   }
 }
 
-data class TlsSettings(
+class TlsSettings(
   val authenticate: Boolean = default.authenticate(),
   val sslProvider: String = default.sslProvider(),
   val addlCerts: Set<Certificate> = emptySet(),

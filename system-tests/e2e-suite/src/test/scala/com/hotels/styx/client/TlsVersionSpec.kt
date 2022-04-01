@@ -26,6 +26,7 @@ import com.hotels.styx.support.backends.FakeHttpServer
 import com.hotels.styx.utils.StubOriginHeader.STUB_ORIGIN_INFO
 import com.hotels.styx.StyxClientSupplier
 import com.hotels.styx.StyxProxySpec
+import com.hotels.styx.api.HttpResponseStatus.BAD_GATEWAY
 import com.hotels.styx.api.HttpResponseStatus.OK
 import com.hotels.styx.support.configuration.Origins
 import com.hotels.styx.support.configuration.TlsSettings
@@ -33,12 +34,14 @@ import io.kotest.core.spec.style.StringSpec
 import org.scalatest.SequentialNestedSuiteExecution
 
 import java.nio.charset.StandardCharsets.UTF_8
+import kotlin.time.ExperimentalTime
 
+@ExperimentalTime
 class TlsVersionSpec:
   StyxProxySpec,
   StyxClientSupplier,
   SequentialNestedSuiteExecution,
-  StringSpec({
+  StringSpec() {
 
     fun originResponse(appId: String) = aResponse()
       .withStatus(OK.code())
@@ -95,7 +98,7 @@ class TlsVersionSpec:
       logbackXmlLocation = logback
     )
 
-    fun beforeAll(): Unit {
+    override fun beforeTest(): Unit {
       super.beforeAll()
 
       styxServer().setBackends(
@@ -121,7 +124,7 @@ class TlsVersionSpec:
       )
     }
 
-    fun afterAll(): Unit {
+    override fun afterAll(): Unit {
       appOriginTlsv11.stop()
       appOriginTlsv12.stop()
       afterAll()
@@ -136,52 +139,50 @@ class TlsVersionSpec:
       return matchingStrategy
     }
 
-  "Backend Service TLS Protocol Setting" {
+    init {
+      "Proxies to TLSv1.1 origin when TLSv1.1 support enabled." {
+        val response1 = decodedRequest(httpRequest("/tls11/a"))
+        assert(response1.status() == OK)
+        assert(response1.bodyAs(UTF_8) == "Hello, World!")
 
-    "Proxies to TLSv1.1 origin when TLSv1.1 support enabled." {
-      val response1 = decodedRequest(httpRequest("/tls11/a"))
-      assert(response1.status() == OK)
-      assert(response1.bodyAs(UTF_8) == "Hello, World!")
-
-      appOriginTlsv11.verify(
-        getRequestedFor(
-          urlEqualTo("/tls11/a")
+        appOriginTlsv11.verify(
+          getRequestedFor(
+            urlEqualTo("/tls11/a")
+          )
+            .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
         )
-          .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
-      )
 
-      val response2 = decodedRequest(httpRequest("/tlsDefault/a2"))
-      assert(response2.status() == OK)
-      assert(response2.bodyAs(UTF_8) == "Hello, World!")
+        val response2 = decodedRequest(httpRequest("/tlsDefault/a2"))
+        assert(response2.status() == OK)
+        assert(response2.bodyAs(UTF_8) == "Hello, World!")
 
-      appOriginTlsDefault.verify(
-        getRequestedFor(
-          urlEqualTo("/tlsDefault/a2")
+        appOriginTlsDefault.verify(
+          getRequestedFor(
+            urlEqualTo("/tlsDefault/a2")
+          )
+            .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
         )
-          .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
-      )
-    }
+      }
 
-    "Proxies to TLSv1.2 origin when TLSv1.2 support is enabled." {
-      val response1 = decodedRequest(httpRequest("/tlsDefault/b1"))
-      assert(response1.status() == OK)
-      assert(response1.bodyAs(UTF_8) == "Hello, World!")
+      "Proxies to TLSv1.2 origin when TLSv1.2 support is enabled." {
+        val response1 = decodedRequest(httpRequest("/tlsDefault/b1"))
+        assert(response1.status() == OK)
+        assert(response1.bodyAs(UTF_8) == "Hello, World!")
 
-      appOriginTlsDefault.verify(
-        getRequestedFor(urlEqualTo("/tlsDefault/b1"))
-          .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
-      )
+        appOriginTlsDefault.verify(
+          getRequestedFor(urlEqualTo("/tlsDefault/b1"))
+            .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
+        )
 
-      val response2 = decodedRequest(httpRequest("/tls12/b2"))
-      assert(response2.status() == OK)
-      assert(response2.bodyAs(UTF_8) == "Hello, World!")
+        val response2 = decodedRequest(httpRequest("/tls12/b2"))
+        assert(response2.status() == OK)
+        assert(response2.bodyAs(UTF_8) == "Hello, World!")
 
-      appOriginTlsv12.verify(
-        getRequestedFor(urlEqualTo("/tls12/b2"))
-          .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
-      )
-    }
-  }
+        appOriginTlsv12.verify(
+          getRequestedFor(urlEqualTo("/tls12/b2"))
+            .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
+        )
+      }
 
       "Refuses to connect to TLSv1.1 origin when TLSv1.1 is disabled" {
         val response = decodedRequest(httpRequest("/tls11-to-tls12/c"))
@@ -191,8 +192,9 @@ class TlsVersionSpec:
 
         appOriginTlsv12B.verify(0, getRequestedFor(urlEqualTo("/tls11-to-tls12/c")))
       }
+    }
 
-  })
+  }
 
 
 

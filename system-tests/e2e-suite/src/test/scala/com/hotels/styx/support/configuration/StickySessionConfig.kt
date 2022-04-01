@@ -16,32 +16,30 @@
 package com.hotels.styx.support.configuration
 
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeUnit.{MILLISECONDS, SECONDS}
 
-import com.hotels.styx.api.extension
 import com.hotels.styx.api.extension.service.StickySessionConfig.Builder
+import java.time.Duration
 
-import scala.concurrent.duration.Duration
-
-case class StickySessionConfig(enabled: Boolean = StickySessionConfigDefaults.enabled,
-                               timeout: Duration = StickySessionConfigDefaults.timeout
-                              ) {
-  def asJava: extension.service.StickySessionConfig = new Builder()
+class StickySessionConfig(val enabled: Boolean = StickySessionConfigDefaults.enabled,
+                          val timeout: Duration = StickySessionConfigDefaults.timeout
+) {
+  fun asJava(): com.hotels.styx.api.extension.service.StickySessionConfig = Builder()
     .enabled(enabled)
-    .timeout(timeout.toMillis.toInt, MILLISECONDS)
+    .timeout(timeout.toMillis().toInt(), TimeUnit.SECONDS)
     .build()
+
+  companion object {
+    fun fromJava(from: com.hotels.styx.api.extension.service.StickySessionConfig): StickySessionConfig =
+      StickySessionConfig(
+      enabled = from.stickySessionEnabled(),
+      timeout = Duration.ofSeconds(from.stickySessionTimeoutSeconds().toLong())
+      )
+  }
 }
 
 object StickySessionConfigDefaults {
-  private val defaults = new Builder().build()
+  private val defaults = Builder().build()
   val enabled = defaults.stickySessionEnabled()
-  val timeout = Duration(defaults.stickySessionTimeoutSeconds(), SECONDS)
+  val timeout = Duration.ofSeconds(defaults.stickySessionTimeoutSeconds().toLong())
 }
 
-object StickySessionConfig {
-  def fromJava(from: extension.service.StickySessionConfig): StickySessionConfig =
-    StickySessionConfig(
-      enabled = from.stickySessionEnabled(),
-      timeout = Duration(from.stickySessionTimeoutSeconds(), TimeUnit.SECONDS)
-    )
-}

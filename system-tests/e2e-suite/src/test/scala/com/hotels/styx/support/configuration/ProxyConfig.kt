@@ -15,7 +15,7 @@
  */
 package com.hotels.styx.support.configuration
 
-import com.hotels.styx.StyxServerSupport.*
+import com.hotels.styx.KStyxServerSupport.newProxyServerConfigBuilder
 
 
 data class ProxyConfig(val connectors: Connectors = Connectors(HttpConnectorConfig(), null),

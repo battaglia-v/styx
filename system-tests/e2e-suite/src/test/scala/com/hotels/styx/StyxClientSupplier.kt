@@ -22,6 +22,7 @@ import com.hotels.styx.client.StyxHttpClient
 import org.scalatest.BeforeAndAfterAll
 
 import org.slf4j.LoggerFactory
+import java.util.concurrent.Future
 
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime

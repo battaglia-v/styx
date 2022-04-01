@@ -15,23 +15,26 @@
  */
 package com.hotels.styx.support.configuration
 
-case class Origin(host: String,
-                  port: Int,
-                  id: String = Origin.default.id().toString,
-                  appId: String = Origin.default.applicationId().toString
-                 ) {
-  def asJava(): com.hotels.styx.api.extension.Origin =
+data class Origin(
+    val host: String,
+    val port: Int,
+    val id: String = default.id().toString(),
+    val appId: String = default.applicationId().toString()
+) {
+  fun asJava(): com.hotels.styx.api.extension.Origin =
     com.hotels.styx.api.extension.Origin.newOriginBuilder(host, port)
       .applicationId(appId)
       .id(id)
       .build()
 
-  def hostAsString: String = s"$host:$port"
+  fun hostAsString(): String = "$host:$port"
+
+  companion object {
+    val default = com.hotels.styx.api.extension.Origin.newOriginBuilder("localhost", 0).build()
+
+    fun fromJava(from: com.hotels.styx.api.extension.Origin): Origin =
+        Origin(from.host(), from.port(), from.id().toString(), from.applicationId().toString())
+  }
 }
 
-object Origin {
-  val default = com.hotels.styx.api.extension.Origin.newOriginBuilder("localhost", 0).build()
 
-  def fromJava(from: com.hotels.styx.api.extension.Origin): Origin =
-    Origin(from.host, from.port, from.id().toString, from.applicationId().toString)
-}
