@@ -22,7 +22,6 @@ import com.hotels.styx.api.HttpResponse
 import com.hotels.styx.client.StyxHttpClient
 
 import org.slf4j.LoggerFactory
-import scala.concurrent.Await
 import java.util.concurrent.CompletableFuture
 
 import kotlin.time.Duration
@@ -58,16 +57,16 @@ class StyxClientSupplier {
                      maxSize: Int = 1024 * 1024,
                      timeout: Duration = 45.seconds,
                      secure: Boolean = false
-                    ): HttpResponse {
-    val future = doRequest(request, secure = secure)
-      .map { response ->
+                    ): CompletableFuture<HttpResponse> {
+    return doRequest(request, secure = secure)
+      .also { response ->
         if (debug) {
           LOGGER.info("StyxClientSupplier: received response for: " + request.url().path())
         }
         response
       }
-    Await.result(future, timeout)
+// TODO: move the asynchronous waiting logic to the actual test
+//    Await.result(future, timeout)
 
-}}
-
+  }
 }

@@ -45,7 +45,7 @@ import kotlin.time.ExperimentalTime
 class TlsVersionSpec: StringSpec() {
     private val styxProxySpec: StyxProxySpec = StyxProxySpec()
     private val styxClientSupplier: StyxClientSupplier = StyxClientSupplier()
-    private val sequentialNestedSuiteExecution: SequentialNestedSuiteExecution = SequentialNestedSuiteExecution()
+//    private val sequentialNestedSuiteExecution: SequentialNestedSuiteExecution = SequentialNestedSuiteExecution()
 
 
     fun originResponse(appId: String) = aResponse()
@@ -146,7 +146,7 @@ class TlsVersionSpec: StringSpec() {
 
     init {
       "Proxies to TLSv1.1 origin when TLSv1.1 support enabled." {
-        val response1 = decodedRequest(httpRequest("/tls11/a"))
+        val response1 = styxClientSupplier.decodedRequest(httpRequest("/tls11/a"))
         assert(response1.status() == OK)
         assert(response1.bodyAs(UTF_8) == "Hello, World!")
 
@@ -157,7 +157,7 @@ class TlsVersionSpec: StringSpec() {
             .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
         )
 
-        val response2 = decodedRequest(httpRequest("/tlsDefault/a2"))
+        val response2 = styxClientSupplier.decodedRequest(httpRequest("/tlsDefault/a2"))
         assert(response2.status() == OK)
         assert(response2.bodyAs(UTF_8) == "Hello, World!")
 
@@ -170,7 +170,7 @@ class TlsVersionSpec: StringSpec() {
       }
 
       "Proxies to TLSv1.2 origin when TLSv1.2 support is enabled." {
-        val response1 = decodedRequest(httpRequest("/tlsDefault/b1"))
+        val response1 = styxClientSupplier.decodedRequest(httpRequest("/tlsDefault/b1"))
         assert(response1.status() == OK)
         assert(response1.bodyAs(UTF_8) == "Hello, World!")
 
@@ -179,7 +179,7 @@ class TlsVersionSpec: StringSpec() {
             .withHeader("X-Forwarded-Proto", valueMatchingStrategy("http"))
         )
 
-        val response2 = decodedRequest(httpRequest("/tls12/b2"))
+        val response2 = styxClientSupplier.decodedRequest(httpRequest("/tls12/b2"))
         assert(response2.status() == OK)
         assert(response2.bodyAs(UTF_8) == "Hello, World!")
 
@@ -190,7 +190,7 @@ class TlsVersionSpec: StringSpec() {
       }
 
       "Refuses to connect to TLSv1.1 origin when TLSv1.1 is disabled" {
-        val response = decodedRequest(httpRequest("/tls11-to-tls12/c"))
+        val response = styxClientSupplier.decodedRequest(httpRequest("/tls11-to-tls12/c"))
 
         assert(response.status() == BAD_GATEWAY)
         assert(response.bodyAs(UTF_8) == "Site temporarily unavailable.")
