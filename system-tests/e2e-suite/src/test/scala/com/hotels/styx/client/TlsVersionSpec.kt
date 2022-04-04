@@ -36,12 +36,17 @@ import org.scalatest.SequentialNestedSuiteExecution
 import java.nio.charset.StandardCharsets.UTF_8
 import kotlin.time.ExperimentalTime
 
+// These classes were previously inherited using the 'with' keyword in Scala:
+//  StyxProxySpec,
+//  StyxClientSupplier,
+//  SequentialNestedSuiteExecution,
+
 @ExperimentalTime
-class TlsVersionSpec:
-  StyxProxySpec,
-  StyxClientSupplier,
-  SequentialNestedSuiteExecution,
-  StringSpec() {
+class TlsVersionSpec: StringSpec() {
+    private val styxProxySpec: StyxProxySpec = StyxProxySpec()
+    private val styxClientSupplier: StyxClientSupplier = StyxClientSupplier()
+    private val sequentialNestedSuiteExecution: SequentialNestedSuiteExecution = SequentialNestedSuiteExecution()
+
 
     fun originResponse(appId: String) = aResponse()
       .withStatus(OK.code())

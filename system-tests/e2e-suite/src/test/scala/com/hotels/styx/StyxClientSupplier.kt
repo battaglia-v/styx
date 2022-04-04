@@ -18,53 +18,56 @@ package com.hotels.styx
 import java.util.concurrent.TimeUnit.MILLISECONDS
 
 import com.hotels.styx.api.HttpRequest
+import com.hotels.styx.api.HttpResponse
 import com.hotels.styx.client.StyxHttpClient
-import org.scalatest.BeforeAndAfterAll
 
 import org.slf4j.LoggerFactory
-import java.util.concurrent.Future
+import scala.concurrent.Await
+import java.util.concurrent.CompletableFuture
 
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
-interface StyxClientSupplier: BeforeAndAfterAll {
-  this: Suite =>
+class StyxClientSupplier {
+//  this: Suite =>
 
   val TWO_SECONDS: Int = 2 * 1000
   val FIVE_SECONDS: Int = 5 * 1000
 
-  private val LOGGER = LoggerFactory.getLogger(getClass)
+  private val LOGGER = LoggerFactory.getLogger(javaClass)
 
   val client: StyxHttpClient = StyxHttpClient.Builder()
     .connectTimeout(1000, MILLISECONDS)
     .maxHeaderSize(2 * 8192)
     .build()
 
-  override fun afterAll(): Unit {
-    super.afterAll()
-  }
+//  override fun afterAll(): Unit {
+//    super.afterAll()
+//  }
 
   private fun doRequest(
-    val request: HttpRequest, secure: Boolean = false): Future[HttpResponse] = if (secure)
-    client.secure().send(request).toScala
+    request: HttpRequest, secure: Boolean = false): CompletableFuture<HttpResponse> = if (secure)
+    client.secure().send(request)
   else
-    client.send(request).toScala
+    client.send(request)
 
   @ExperimentalTime
   fun decodedRequest(request: HttpRequest,
                      debug: Boolean = false,
-                     maxSize: Int = 1024 * 1024, timeout: Duration = 45.seconds,
+                     maxSize: Int = 1024 * 1024,
+                     timeout: Duration = 45.seconds,
                      secure: Boolean = false
-                    ): HttpResponse = {
+                    ): HttpResponse {
     val future = doRequest(request, secure = secure)
-      .map(response -> ()
+      .map { response ->
         if (debug) {
           LOGGER.info("StyxClientSupplier: received response for: " + request.url().path())
         }
         response
-      })
+      }
     Await.result(future, timeout)
-  }
+
+}}
 
 }
